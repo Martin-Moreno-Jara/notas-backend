@@ -15,7 +15,10 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret-key")
 
-CORS(app, resources={r"/*": {"origins": "*", "allow_headers": "*", "expose_headers": "*"}})
+CORS(
+    app,
+    resources={r"/*": {"origins": "*", "allow_headers": "*", "expose_headers": "*"}},
+)
 
 swagger_config = {
     "headers": [],
@@ -160,7 +163,10 @@ def register():
         name = data.get("name")
 
         if not user or not password or not name:
-            return jsonify({"error": "Faltan campos requeridos: user, password, name"}), 400
+            return (
+                jsonify({"error": "Faltan campos requeridos: user, password, name"}),
+                400,
+            )
 
         existing_user = User.query.filter_by(user=user).first()
         if existing_user:
@@ -172,7 +178,10 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        return jsonify({"message": "Usuario registrado exitosamente", "id": new_user.id}), 201
+        return (
+            jsonify({"message": "Usuario registrado exitosamente", "id": new_user.id}),
+            201,
+        )
 
     except Exception as e:
         db.session.rollback()
@@ -214,10 +223,14 @@ def login():
             message:
               type: string
               example: "Login exitoso"
-            id:
+            user_id:
               type: integer
               example: 1
               description: ID del usuario autenticado
+            name:
+              type: string
+              example: "John Doe"
+              description: Nombre completo del usuario
       400:
         description: Datos inválidos o incompletos
         schema:
@@ -259,7 +272,16 @@ def login():
         if not existing_user or not existing_user.check_password(password):
             return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
 
-        return jsonify({"message": "Login exitoso", "id": existing_user.id}), 200
+        return (
+            jsonify(
+                {
+                    "message": "Login exitoso",
+                    "user_id": existing_user.id,
+                    "name": existing_user.name,
+                }
+            ),
+            200,
+        )
 
     except Exception as e:
         return jsonify({"error": f"Error al iniciar sesión: {str(e)}"}), 500
@@ -389,7 +411,12 @@ def create_note():
         db.session.add(new_note)
         db.session.commit()
 
-        return jsonify({"message": "Nota creada exitosamente", "note": new_note.to_dict()}), 201
+        return (
+            jsonify(
+                {"message": "Nota creada exitosamente", "note": new_note.to_dict()}
+            ),
+            201,
+        )
 
     except Exception as e:
         db.session.rollback()
@@ -477,7 +504,10 @@ def get_all_notes():
     try:
         notes = Note.query.filter_by(user_id=request.current_user_id).all()
 
-        return jsonify({"notes": [note.to_dict() for note in notes], "total": len(notes)}), 200
+        return (
+            jsonify({"notes": [note.to_dict() for note in notes], "total": len(notes)}),
+            200,
+        )
 
     except Exception as e:
         return jsonify({"error": f"Error al obtener notas: {str(e)}"}), 500
